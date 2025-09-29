@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tienda IA de Moda (Demo)</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <header class="site-header">
+        <h1>AldoNero Demo · Asesor de Moda con IA</h1>
+        <p class="sub">Selecciona cualquier artículo y pídele a la IA un outfit que combine con el resto del catálogo.</p>
+    </header>
+
+    <main class="container">
+        <section class="toolbar">
+            <label for="occasion">Ocasión:</label>
+            <select id="occasion">
+                <option value="">Cualquiera</option>
+                <option>Trabajo</option>
+                <option>Casual</option>
+                <option>Boda</option>
+                <option>Fiesta</option>
+                <option>Formal</option>
+            </select>
+
+            <label for="style">Estilo:</label>
+            <select id="style">
+                <option value="">Cualquiera</option>
+                <option>Minimalista</option>
+                <option>Clásico</option>
+                <option>Urbano</option>
+                <option>Deportivo</option>
+                <option>Elegante</option>
+            </select>
+        </section>
+
+        <section>
+            <h2>Catálogo</h2>
+            <div id="catalogo" class="grid"></div>
+        </section>
+
+        <section class="suggestions-wrapper">
+            <div class="suggestions-header">
+                <h2>Outfit sugerido por IA</h2>
+                <button id="clearSuggestions" class="btn secondary">Limpiar</button>
+            </div>
+            <div id="suggestions" class="grid"></div>
+            <pre id="rawOutput" class="raw-output" hidden></pre>
+        </section>
+    </main>
+
+    <div id="backdrop" class="backdrop" hidden>
+        <div class="loader">Generando outfit con IA…</div>
+    </div>
+
+
+
+    <footer class="site-footer">
+        <small>Demo local · HTML/CSS/JS + PHP · No uses tu API key en frontend.</small>
+    </footer>
+     
+
+    <script src="script.js"></script>
+    
+</body>
+</html>
