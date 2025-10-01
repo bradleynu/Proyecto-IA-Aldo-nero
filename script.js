@@ -1,6 +1,5 @@
 let CATALOG = [];
 const catalogDiv = document.getElementById("catalogo");
-const suggestionsDiv = document.getElementById("suggestions");
 const rawOutput = document.getElementById("rawOutput");
 const backdrop = document.getElementById("backdrop");
 
@@ -46,25 +45,26 @@ function renderCatalog(items) {
   catalogDiv.querySelectorAll("button[data-id]").forEach(btn => {
     btn.addEventListener("click", async (e) => {
       const id = e.currentTarget.getAttribute("data-id");
-      const occ = document.getElementById("occasion").value;
-      const sty = document.getElementById("style").value;
-      await requestOutfit(id, { occasion: occ, style: sty });
+      await requestOutfit(id);
     });
   });
 }
+
 // Petición al backend (api.php)
-async function requestOutfit(baseId, prefs = {}) {
+async function requestOutfit(baseId) {
     try {
-        console.log("➡️ requestOutfit start", { baseId, prefs });
+        console.log("➡️ requestOutfit start", { baseId });
         backdrop.hidden = false;
 
         const res = await fetch("./api.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ baseProductId: baseId, preferences: prefs })
+            body: JSON.stringify({ baseProductId: baseId })
         });
 
-        console.log("📡 status", res.status);
+        if (!res.ok) {
+            throw new Error(`Error en la petición a api.php (HTTP ${res.status})`);
+        }
 
         const data = await res.json();
         console.log("📦 response JSON", data);
@@ -73,10 +73,10 @@ async function requestOutfit(baseId, prefs = {}) {
             throw new Error(data.error);
         }
 
-        rawOutput.hidden = false;
-        rawOutput.textContent = JSON.stringify(data.raw || {}, null, 2);
+        rawOutput.hidden = true; // Ocultamos el 'raw output' que ya no es necesario
 
-        renderSuggestions(data.suggestions || []);
+        renderSuggestions(data.baseProduct, data.suggestions || []);
+
     } catch (err) {
         console.error("❌ requestOutfit error", err);
         alert("Error generando outfit: " + err.message);
@@ -86,27 +86,41 @@ async function requestOutfit(baseId, prefs = {}) {
     }
 }
 
+// Renderizar el outfit en el nuevo layout "Lookbook"
+function renderSuggestions(baseProduct, suggestions = []) {
+  const outfitContainer = document.getElementById("outfit-display");
+  outfitContainer.innerHTML = ""; // Limpiamos antes de dibujar
 
-// Renderizar sugerencias del backend
-function renderSuggestions(arr) {
-  suggestionsDiv.innerHTML = "";
-  if (!arr.length) {
-    suggestionsDiv.innerHTML = "<p>No hubo sugerencias.</p>";
+  if (!baseProduct) {
+    outfitContainer.hidden = true;
     return;
   }
+  outfitContainer.hidden = false;
 
-  arr.forEach(p => {
-    const el = document.createElement("article");
-    el.className = "card";
-    el.innerHTML = `
-      <div class="img"><img src="${p.image}" alt="${p.name}" loading="lazy" /></div>
-      <div class="content">
-        <h3>${p.name}</h3>
-        <div class="meta">${p.category}</div>
-        <div class="tags">${(p.colors || []).map(c => tag(c)).join("")}</div>
-      </div>
-    `;
-    suggestionsDiv.appendChild(el);
+  // Función interna para crear el HTML de una tarjeta
+  const createCardHTML = (p) => `
+    <div class="img"><img src="${p.image}" alt="${p.name}" loading="lazy" /></div>
+    <div class="content">
+      <h3>${p.name}</h3>
+      <div class="meta">${p.category}</div>
+      <div class="tags">${(p.colors || []).map(c => tag(c)).join("")}</div>
+    </div>
+  `;
+
+  // 1. Crea y añade la prenda BASE al centro
+  const baseEl = document.createElement("article");
+  baseEl.className = "card outfit-base-item";
+  baseEl.innerHTML = createCardHTML(baseProduct);
+  outfitContainer.appendChild(baseEl);
+
+  // 2. Crea y añade las SUGERENCIAS alrededor
+  suggestions.forEach((p, index) => {
+    if (index < 4) { // Limitamos a un máximo de 4 sugerencias
+      const suggestionEl = document.createElement("article");
+      suggestionEl.className = `card outfit-suggestion-${index + 1}`;
+      suggestionEl.innerHTML = createCardHTML(p);
+      outfitContainer.appendChild(suggestionEl);
+    }
   });
 }
 
@@ -114,9 +128,8 @@ function renderSuggestions(arr) {
 const clearBtn = document.getElementById("clearSuggestions");
 if (clearBtn) {
   clearBtn.addEventListener("click", () => {
-    suggestionsDiv.innerHTML = "";
+    document.getElementById("outfit-display").hidden = true;
     rawOutput.hidden = true;
-    rawOutput.textContent = "";
   });
 }
 
